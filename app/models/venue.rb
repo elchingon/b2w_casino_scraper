@@ -32,7 +32,7 @@ class Venue < ActiveRecord::Base
     begin
       wp = WebParser.new
 
-      venues = Venue.where("wiki_url LIKE '%wikipedia.org/wiki%' AND id > 690")
+      venues = Venue.where("wiki_url LIKE '%wikipedia.org/wiki%'")
       venues.each do |venue|
         venue_update_logger.info("Updating Venue '#{venue.title}' Attributes")
         result_hash = wp.parse_casino_wiki venue.wiki_url, venue.title
