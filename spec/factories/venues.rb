@@ -1,0 +1,28 @@
+FactoryGirl.define do
+  factory :venue do
+    title "MyString"
+    headline "MyString"
+    description "MyText"
+    type ""
+    phone "MyString"
+    address1 "MyString"
+    address2 "MyString"
+    city "MyString"
+    state "MyString"
+    latitude "9.99"
+    longitude "9.99"
+    url "MyString"
+    logo_url "MyString"
+    summary "MyText"
+    attractions "MyText"
+    photo_urls "MyText"
+    opening_date "MyString"
+    number_of_rooms "MyString"
+    theme "MyString"
+    total_gaming_space "MyString"
+    permanent_space "MyString"
+    casino_type "MyString"
+    owner "MyString"
+    renovated_at "2016-04-28 17:24:39"
+  end
+end
