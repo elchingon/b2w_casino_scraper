@@ -1,10 +1,8 @@
 class Venue < ActiveRecord::Base
 
-
   def self.load_wiki_venues_list
     begin
-      # Call Webparser.parse_casino_list_wiki
-      wp = WebParser.new
+      wp = WikiCasino.new
       results_hash = wp.parse_casino_list_wiki
 
       # Find OR Create Venues from Casino names in list
@@ -30,7 +28,7 @@ class Venue < ActiveRecord::Base
     # Iterate all venues with wiki_url
     # update attributes from wiki page hash
     begin
-      wp = WebParser.new
+      wp = WikiCasino.new
 
       venues = Venue.where("wiki_url LIKE '%wikipedia.org/wiki%'")
       venues.each do |venue|
@@ -48,7 +46,7 @@ class Venue < ActiveRecord::Base
     end
   end
 
-
+  #
   def self.venue_update_logger
     @venue_update_logs ||= Logger.new("#{Rails.root}/log/venue_updates.log")
   end

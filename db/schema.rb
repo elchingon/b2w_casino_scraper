@@ -11,7 +11,30 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20160429043433) do
+ActiveRecord::Schema.define(version: 20160519174229) do
+
+  create_table "events", force: :cascade do |t|
+    t.integer  "user_id",         limit: 4
+    t.integer  "venue_id",        limit: 4
+    t.integer  "parent_event_id", limit: 4
+    t.integer  "locality_id",     limit: 4
+    t.string   "title",           limit: 255
+    t.text     "description",     limit: 65535
+    t.datetime "start_date"
+    t.datetime "end_date"
+    t.string   "address1",        limit: 255
+    t.string   "address2",        limit: 255
+    t.string   "city",            limit: 255
+    t.string   "state",           limit: 255
+    t.string   "zipcode",         limit: 255
+    t.string   "country",         limit: 255
+    t.string   "link_url",        limit: 255
+    t.string   "image_url",       limit: 255
+    t.decimal  "latitude",                      precision: 10, scale: 7
+    t.decimal  "longitude",                     precision: 10, scale: 7
+    t.datetime "created_at",                                             null: false
+    t.datetime "updated_at",                                             null: false
+  end
 
   create_table "venues", force: :cascade do |t|
     t.string   "title",              limit: 255
@@ -27,8 +50,8 @@ ActiveRecord::Schema.define(version: 20160429043433) do
     t.string   "address2",           limit: 255
     t.string   "city",               limit: 255
     t.string   "state",              limit: 255
-    t.decimal  "latitude",                         precision: 10
-    t.decimal  "longitude",                        precision: 10
+    t.decimal  "latitude",                         precision: 22, scale: 7
+    t.decimal  "longitude",                        precision: 22, scale: 7
     t.string   "latitude_str",       limit: 255
     t.string   "longitude_str",      limit: 255
     t.string   "url",                limit: 255
@@ -45,8 +68,8 @@ ActiveRecord::Schema.define(version: 20160429043433) do
     t.string   "casino_type",        limit: 255
     t.string   "owner",              limit: 255
     t.datetime "renovated_at"
-    t.datetime "created_at",                                      null: false
-    t.datetime "updated_at",                                      null: false
+    t.datetime "created_at",                                                null: false
+    t.datetime "updated_at",                                                null: false
   end
 
 end
