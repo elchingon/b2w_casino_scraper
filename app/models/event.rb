@@ -54,6 +54,26 @@ class Event < ActiveRecord::Base
     end
   end
 
+
+  def self.import_sycuan_events
+    begin
+      events_processed, events_imported = 0, 0
+      sycuan_id = 305
+
+      event_update_logger.info("Starting Sycuan Event ID #{sycuan_id}")
+
+      wiki_event = WikiEvent.new "http://www.sycuan.com/", "events/"
+      # Method to parse url event list page info
+      # @return event_array with event urls
+
+
+      #wiki_event_details = WikiEvent.new "http://www.sycuan.com", "+ url
+      #Method to parse event detail
+
+    rescue Exception => e
+      event_update_logger.error(e.inspect)
+    end
+  end
   #
   def self.event_update_logger
     @event_update_logs ||= Logger.new("#{Rails.root}/log/event_updates.log")
