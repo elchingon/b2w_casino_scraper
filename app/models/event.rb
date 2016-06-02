@@ -63,9 +63,7 @@ class Event < ActiveRecord::Base
       event_update_logger.info("Starting Sycuan Event ID #{sycuan_id}")
 
       wiki_event = WikiEvent.new "http://www.sycuan.com/", "events/"
-      # Method to parse url event list page info
-      # @return event_array with event urls
-
+      events_list = wiki_event.parse_sycuan_event_list
 
       #wiki_event_details = WikiEvent.new "http://www.sycuan.com", "+ url
       #Method to parse event detail

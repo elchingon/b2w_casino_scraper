@@ -37,4 +37,32 @@ class WikiEvent < WebParser
     end
   end
 
+
+  # Method to parse url event list page info
+  # @return event_array with event urls
+  def parse_sycuan_event_list
+
+    event_data = [{}]
+    doc = open_url @web_url + @url_path
+
+    if doc.children && doc.children.length > 1
+      results = doc.children[1].at_css(".events-loop")
+
+      unless results.nil?
+        results.children.each do |row|
+
+          if row.css(".events-loop-event-title").nil? && !row.css(".events-loop-event-title").empty?
+            link = row.css(".events-loop-event-title")[0]["href"]
+            event_data << link if link
+          end
+
+
+        end
+
+        event_data
+      end
+
+    end
+  end
+
 end
