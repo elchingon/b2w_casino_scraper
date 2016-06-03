@@ -3,8 +3,27 @@ require 'open-uri'
 class WebParser
 
   def open_url url
-    Nokogiri::HTML(open(url))
+    Nokogiri::HTML(read_url(url))
   end
+
+  def read_url url
+    uri = ''
+    retries = 0
+    begin
+      open(url){|f|
+          uri = f.read
+      }
+      uri unless uri == "Error"
+
+    rescue OpenURI::HTTPError
+      if url && retries < 3
+        retries += 1
+        retry
+      end
+    end
+  end
+
+
 
   # @return Hash
   def find_value_by_xpath css_object, xpath_id, field_name
