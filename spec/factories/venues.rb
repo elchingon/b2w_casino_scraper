@@ -3,7 +3,7 @@ FactoryGirl.define do
     title "MyString"
     headline "MyString"
     description "MyText"
-    type ""
+    event_type ""
     phone "MyString"
     address1 "MyString"
     address2 "MyString"
