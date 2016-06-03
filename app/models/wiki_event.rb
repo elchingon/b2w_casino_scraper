@@ -13,10 +13,11 @@ class WikiEvent < WebParser
     #xpath = "#concerts-result"
     result = doc.children
     results = result[1].children
+
     json = JSON(results[0].content)
     if json
 
-      event_data = [{}]
+      event_data = []
       json.each_with_index do |unit, index|
         event_title = unit["Title"].strip
         event_subtitle = unit["Subtitle"].strip
@@ -42,7 +43,7 @@ class WikiEvent < WebParser
   # @return event_array with event urls
   def parse_sycuan_event_list
 
-    event_data = [{}]
+    event_url = []
     doc = open_url @web_url + @url_path
 
     if doc.children && doc.children.length > 1
@@ -50,19 +51,50 @@ class WikiEvent < WebParser
 
       unless results.nil?
         results.children.each do |row|
-
-          if row.css(".events-loop-event-title").nil? && !row.css(".events-loop-event-title").empty?
-            link = row.css(".events-loop-event-title")[0]["href"]
-            event_data << link if link
+          if !row.at_css(".events-loop-event-title").nil? && row.at_css(".events-loop-event-title").count
+            link = row.at_css(".events-loop-event-title")["href"]
+            event_url.push(link) if link
           end
-
-
         end
-
-        event_data
+        event_url
       end
 
     end
-  end
 
+    #get event array with the event
+    event_data = []
+
+    event_url.each do |i|
+
+      doc = open_url i
+      result = doc.children
+      results = result[1].children
+
+      event_title = result.children[3].children[11].children[3].children[5].children[1].children[3].children[3].content.strip
+      event_date = result.children[3].children[11].children[3].children[5].children[1].children[3].children[15].children[5].children[1].content.strip
+
+      unless result.children[3].children[11].children[3].children[5].children[1].children[3].children[15].children[5].children[3].nil?
+      event_description = result.children[3].children[11].children[3].children[5].children[1].children[3].children[15].children[5].children[3].content
+      end
+
+      unless result.children[3].children[11].children[3].children[5].children[1].children[3].children[15].children[5].children[5].nil?
+      event_url = result.children[3].children[11].children[3].children[5].children[1].children[3].children[15].children[5].children[5].at_css('.purple-button-poker')["href"]
+      end
+
+      event_start = result.children[3].children[11].children[3].children[5].children[1].children[3].children[15].children[16].children[1].children[3].children[3].children[1].content.strip
+      event_end = result.children[3].children[11].children[3].children[5].children[1].children[3].children[15].children[16].children[1].children[3].children[7].children[1].children[0].content.strip
+
+      event_image_url = result.children[3].children[11].children[3].children[5].children[1].children[3].children[1].attribute("src").content
+      event_hash = {  'title' => event_title,
+                      'event_date' => event_date,
+                      'link_url' => event_url,
+                      'image_url' => event_image_url,
+                      'start_date' => event_start,
+                      'end_date' => event_end,
+                      'description' => event_description
+      }
+      event_data << event_hash
+    end
+    event_data
+  end
 end
