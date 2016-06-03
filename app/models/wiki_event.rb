@@ -1,6 +1,6 @@
 class WikiEvent < WebParser
 
-  def initialize url, url_path
+  def initialize url, url_path = ""
     @web_url = url
     @url_path = url_path
   end
@@ -43,7 +43,7 @@ class WikiEvent < WebParser
   # @return event_array with event urls
   def parse_sycuan_event_list
 
-    event_url = []
+    event_urls = []
     doc = open_url @web_url + @url_path
 
     if doc.children && doc.children.length > 1
@@ -53,48 +53,46 @@ class WikiEvent < WebParser
         results.children.each do |row|
           if !row.at_css(".events-loop-event-title").nil? && row.at_css(".events-loop-event-title").count
             link = row.at_css(".events-loop-event-title")["href"]
-            event_url.push(link) if link
+            event_urls << link if link
           end
         end
-        event_url
+        event_urls
       end
 
     end
+  end
 
+  def parse_sycuan_event_page
     #get event array with the event
-    event_data = []
 
-    event_url.each do |i|
-
-      doc = open_url i
+      doc = open_url @web_url
       result = doc.children
       results = result[1].children
 
-      event_title = result.children[3].children[11].children[3].children[5].children[1].children[3].children[3].content.strip
-      event_date = result.children[3].children[11].children[3].children[5].children[1].children[3].children[15].children[5].children[1].content.strip
+      event_url = @web_url
+      event_title = results.at_css(".tribe-events-single-event-title") ? results.at_css(".tribe-events-single-event-title").content : ""
+      event_description = results.at_css(".tribe-events-single-event-description") ? results.at_css(".tribe-events-single-event-description").content.strip : ""
+      event_image_url = results.at_css("#tribe-events-content img") ? results.at_css("#tribe-events-content img").attr('src') : nil
 
-      unless result.children[3].children[11].children[3].children[5].children[1].children[3].children[15].children[5].children[3].nil?
-      event_description = result.children[3].children[11].children[3].children[5].children[1].children[3].children[15].children[5].children[3].content
+      if results.css(".dtstart").count > 1
+        start_date = results.css(".dtstart").first.content.strip
+        event_time = results.css(".dtstart")[1].content.strip
+        times = event_time.split("-")
+        event_start = "#{start_date} #{times[0].strip}"
+        event_end = times.count > 1 ? "#{start_date} #{times[1].strip}" : start_date + 1.day
+      else
+        event_start = results.at_css(".dtstart") ? results.at_css(".dtstart").content : nil
+        event_end = results.at_css(".dtend") ? results.at_css(".dtend").content : nil
       end
 
-      unless result.children[3].children[11].children[3].children[5].children[1].children[3].children[15].children[5].children[5].nil?
-      event_url = result.children[3].children[11].children[3].children[5].children[1].children[3].children[15].children[5].children[5].at_css('.purple-button-poker')["href"]
-      end
-
-      event_start = result.children[3].children[11].children[3].children[5].children[1].children[3].children[15].children[16].children[1].children[3].children[3].children[1].content.strip
-      event_end = result.children[3].children[11].children[3].children[5].children[1].children[3].children[15].children[16].children[1].children[3].children[7].children[1].children[0].content.strip
-
-      event_image_url = result.children[3].children[11].children[3].children[5].children[1].children[3].children[1].attribute("src").content
       event_hash = {  'title' => event_title,
-                      'event_date' => event_date,
+                      #'event_date' => event_date,
                       'link_url' => event_url,
                       'image_url' => event_image_url,
                       'start_date' => event_start,
                       'end_date' => event_end,
                       'description' => event_description
       }
-      event_data << event_hash
-    end
-    event_data
+      event_hash
   end
 end

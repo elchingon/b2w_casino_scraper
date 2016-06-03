@@ -66,40 +66,35 @@ class Event < ActiveRecord::Base
 
       event_array = wiki_event.parse_sycuan_event_list
 
-      event_update_logger.info("  #{event_array.length} Events Found")
-      event_array.each do |event_hash|
+      event_update_logger.info("  #{event_array.length} Event URls Found")
 
-            if event_hash && event_hash['title']
-              start_date = event_hash['start_date'].to_datetime.to_formatted_s(:db)
-              end_date = event_hash['end_date']
+      event_array.each do |event_url|
+        if event_url == "http://www.sycuan.com/event/the-manhattan-transfer/"
 
-              if end_date.include? "-"
-                end_date2 = end_date.split("-")
-                start_date_combo = event_hash['start_date']+ " " + end_date2[0]
-                start_date = start_date_combo.to_datetime.to_formatted_s(:db)
-                end_date_combo = event_hash['start_date']+ " " + end_date2[1]
-                end_date = end_date_combo.to_datetime.to_formatted_s(:db)
-                binding.pry
-              else
-                end_date = event_hash['end_date'].to_datetime.to_formatted_s(:db)
-              end
+          wiki_event_page = WikiEvent.new event_url
+          event_hash = wiki_event_page.parse_sycuan_event_page
 
-              event = Event.find_or_initialize_by(venue_id: sycuan_id, title: event_hash['title'], start_date: start_date)
+          if event_hash && event_hash['title']
+            start_date = event_hash['start_date'].to_datetime.to_formatted_s(:db)
+            end_date = event_hash['end_date'].to_datetime.to_formatted_s(:db)
 
-              if event.new_record?
-                event_update_logger.info("  New Event - Title #{event_hash['title']}")
-                events_imported += 1
-              end
+            event = Event.find_or_initialize_by(venue_id: sycuan_id, title: event_hash['title'], start_date: start_date)
 
-              event.update_attributes(
-                  description: event_hash['description'],
-                  link_url: event_hash['link_url'],
-                  image_url: event_hash['image_url'],
-                  end_date: end_date
-              )
+            if event.new_record?
+              event_update_logger.info("  New Event - Title #{event_hash['title']}")
+              events_imported += 1
+            end
 
-              events_processed += 1
+            event.update_attributes(
+                description: event_hash['description'],
+                link_url: event_hash['link_url'],
+                image_url: event_hash['image_url'],
+                end_date: end_date
+            )
+
+            events_processed += 1
           end
+        end
       end
 
       #wiki_event_details = WikiEvent.new "http://www.sycuan.com", "+ url
