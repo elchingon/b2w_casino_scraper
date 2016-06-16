@@ -69,7 +69,7 @@ class Event < ActiveRecord::Base
       event_update_logger.info("  #{event_array.length} Event URls Found")
 
       event_array.each do |event_url|
-        if event_url == "http://www.sycuan.com/event/the-manhattan-transfer/"
+        if event_url
 
           wiki_event_page = WikiEvent.new event_url
           event_hash = wiki_event_page.parse_sycuan_event_page
