@@ -207,6 +207,7 @@ DEPENDENCIES
   database_cleaner (= 1.4.1)
   factory_girl_rails (~> 4.0)
   jquery-rails
+  minitest
   mysql2 (~> 0.3.18)
   nokogiri
   pry
