@@ -46,8 +46,8 @@ class Event < ActiveRecord::Base
 
       end unless events_array.empty?
 
-        event_update_logger.info("  Events Processed: #{events_processed}")
-        event_update_logger.info("  New Events Imported: #{events_imported}")
+      event_update_logger.info("  Events Processed: #{events_processed}")
+      event_update_logger.info("  New Events Imported: #{events_imported}")
     rescue Exception => e
       event_update_logger.error(e.inspect)
       #raise
@@ -66,40 +66,35 @@ class Event < ActiveRecord::Base
 
       event_array = wiki_event.parse_sycuan_event_list
 
-      event_update_logger.info("  #{event_array.length} Events Found")
-      event_array.each do |event_hash|
+      event_update_logger.info("  #{event_array.length} Event URls Found")
 
-            if event_hash && event_hash['title']
-              start_date = event_hash['start_date'].to_datetime.to_formatted_s(:db)
-              end_date = event_hash['end_date']
+      event_array.each do |event_url|
+        if event_url
 
-              if end_date.include? "-"
-                end_date2 = end_date.split("-")
-                start_date_combo = event_hash['start_date']+ " " + end_date2[0]
-                start_date = start_date_combo.to_datetime.to_formatted_s(:db)
-                end_date_combo = event_hash['start_date']+ " " + end_date2[1]
-                end_date = end_date_combo.to_datetime.to_formatted_s(:db)
-                binding.pry
-              else
-                end_date = event_hash['end_date'].to_datetime.to_formatted_s(:db)
-              end
+          wiki_event_page = WikiEvent.new event_url
+          event_hash = wiki_event_page.parse_sycuan_event_page
 
-              event = Event.find_or_initialize_by(venue_id: sycuan_id, title: event_hash['title'], start_date: start_date)
+          if event_hash && event_hash['title']
+            start_date = event_hash['start_date'].to_datetime.to_formatted_s(:db)
+            end_date = event_hash['end_date'].to_datetime.to_formatted_s(:db)
 
-              if event.new_record?
-                event_update_logger.info("  New Event - Title #{event_hash['title']}")
-                events_imported += 1
-              end
+            event = Event.find_or_initialize_by(venue_id: sycuan_id, title: event_hash['title'], start_date: start_date)
 
-              event.update_attributes(
-                  description: event_hash['description'],
-                  link_url: event_hash['link_url'],
-                  image_url: event_hash['image_url'],
-                  end_date: end_date
-              )
+            if event.new_record?
+              event_update_logger.info("  New Event - Title #{event_hash['title']}")
+              events_imported += 1
+            end
 
-              events_processed += 1
+            event.update_attributes(
+                description: event_hash['description'],
+                link_url: event_hash['link_url'],
+                image_url: event_hash['image_url'],
+                end_date: end_date
+            )
+
+            events_processed += 1
           end
+        end
       end
 
       #wiki_event_details = WikiEvent.new "http://www.sycuan.com", "+ url
@@ -108,14 +103,39 @@ class Event < ActiveRecord::Base
       event_update_logger.info("  New Events Imported: #{events_imported}")
     rescue Exception => e
       event_update_logger.error(e.inspect)
-
-
     end
   end
+
+  def self.import_b2w_events
+    @b2w_url = "http://api.born2win.club/v1/events"
+    b2w_events = ApiAccessor.new @b2w_url, " "
+    access_api = b2w_events.access_api(@b2w_url)
+    # this works,
+    # parsed_events = b2w_events.parse_api #tada.
+    # more explicit would be
+
+    parsed_events = access_api.to_json.gsub!(/\"/, '\'') #not certain what is better?
+
+    binding.pry
+  end
+
+  def self.import_ticketmaster_events
+    @venue_id = "KovZpaKoVe"
+    ticketmaster_events = TicketmasterApiAccessor.new @venue_id
+    parsed_events = ticketmaster_events.get_ticketmaster_events
+    ticketmaster_events.create_ticketmaster_events parsed_events
+  end
+
   def self.event_update_logger
     @event_update_logs ||= Logger.new("#{Rails.root}/log/event_updates.log")
   end
   def event_update_logger
     @event_update_logs ||= Logger.new("#{Rails.root}/log/event_updates.log")
+  end
+  def self.ticketmaster_update_logger
+    @ticketmaster_update_logs ||= Logger.new("#{Rails.root}/log/ticketmaster_updates.log")
+  end
+  def ticketmaster_update_logger
+    @ticketmaster_update_logs ||= Logger.new("#{Rails.root}/log/ticketmaster_updates.log")
   end
 end

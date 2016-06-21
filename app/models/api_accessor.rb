@@ -1,8 +1,16 @@
 class ApiAccessor
   include HTTParty
 
-  def self.access_api(url_to_open)
-    @response = HTTParty.get(url_to_open)
+  def initialize url, api_key
+      @web_url = url
+      @api_key = api_key
   end
 
+  def access_api url
+    @response = HTTParty.get(url)
+  end
+
+  def parse_api
+    @parsed_response = @response.to_json.gsub!(/\"/, '\'') # parse the API return the JSON
+  end
 end

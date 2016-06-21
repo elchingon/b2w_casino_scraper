@@ -1,13 +1,13 @@
-class B2WApiAccessor < ApiAccessor
+class B2wApiAccessor < ApiAccessor
 
-  def self.get_b2w_api
-    access_api('http://api.born2win.club/v1/events')
-    binding.pry
-    parse_b2w_api
+  def initialize url, api_key
+    @web_url = url
+    @api_key = api_key
   end
 
-  def self.parse_b2w_api
-    b2w_events = @response.to_json.gsub!(/\"/, '\'')
-    b2w_events['status']
+  def get_b2w_api
+    access_api(@web_url)
+    parse_api
   end
+
 end
