@@ -111,6 +111,30 @@ class Event < ActiveRecord::Base
 
     end
   end
+  def self.import_b2w_events
+    @b2w_url = "http://api.born2win.club/v1/events"
+    b2w_events = ApiAccessor.new @b2w_url, " "
+    access_api = b2w_events.access_api(@b2w_url)
+    # this works,
+    # parsed_events = b2w_events.parse_api #tada.
+    # more explicit would be
+
+    parsed_events = access_api.to_json.gsub!(/\"/, '\'') #not certain what is better?
+  end
+
+  def self.import_ticketmaster_events
+    # Thunder Valley Casino: KovZpaKoVe
+    # Pechanga: ZFr9jZdav6
+    # Sycuan: KovZpZA1IJdA
+    # Harrahs Event Center: KovZpZAEknFA
+    @event_ids = ['KovZpZAEknFA' ]
+
+    @event_ids.each do |event_id|
+      ticketmaster_events = TicketmasterApiAccessor.new event_id
+      parsed_events = ticketmaster_events.get_ticketmaster_events
+      ticketmaster_events.create_ticketmaster_events parsed_events
+    end
+  end
   #def self.event_update_logger
   #  @event_update_logs ||= Logger.new("#{Rails.root}/log/event_updates.log")
   #end
