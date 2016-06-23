@@ -1,9 +1,6 @@
-require 'json'
 class TicketmasterApiAccessor < ApiAccessor
   #Some Venue IDs
-  # Thunder Valley Casino: KovZpaKoVe
-  # Pechanga: ZFr9jZdav6
-  # Sycuan: KovZpZA1IJdA
+
   def initialize venue_id
     @api_key = ENV['ticketmaster_api_key']
     @venue_id = venue_id
@@ -14,56 +11,79 @@ class TicketmasterApiAccessor < ApiAccessor
     #make sure the venue id is a string and the api_key is a string
     @venue_id
     #binding.pry
-    if @venue_id.is_a?(String)
       #open the link
-      access_api('https://app.ticketmaster.com/discovery/v2/events.json?apikey='+@api_key+'&venueId=' +@venue_id)
-    else
-      ticketmaster_connection_logger.info('failed to connect to tickmaster API the venue id is:' + venue)
-    end
+      access_api("https://app.ticketmaster.com/discovery/v2/events.json?apikey=#{@api_key}&venueId=#{@venue_id}")
+      if @response.nil?
+        nil
+      else
+        @response
+      end
   end
 
   def create_ticketmaster_events parsed_response
     begin
-    json_events = parsed_response['_embedded']['events']
-    events_processed, events_imported = 0, 0
-      i = 0
-      while i < json_events.length
-        event = json_events[i]
+      json_events = parsed_response['_embedded']['events']
+      unless json_events.nil? || json_events.empty? || json_events.length == 0
+        Event.ticketmaster_update_logger.info("Found #{json_events.length} Events")
 
-        event_name = event['name']
-        event_start_date = event['dates']['start']['dateTime']
-        venue_name = event['_embedded']['venues'][0]['name'] #should be listed off the venue id?
+        events_processed, events_imported = 0, 0
 
-        event['_embedded']['venues'][0]['address']['line2'].nil? ? address_line_2 = ' ' : address_line_2 = event['_embedded']['venues'][0]['address']['line2']
+        json_events.each do |event|
+          the_event = event #stepping on naming toes. Woops.
+          event_name = the_event['name']
+          event_start_date = the_event['dates']['start']['dateTime']
+          venue_name = the_event['_embedded']['venues'][0]['name'] #should be listed off the venue id?
 
-        new_event = Event.find_or_initialize_by(venue_id: @venue_id, title: event_name, start_date: event_start_date)
+          new_event = Event.find_or_initialize_by(ticketmaster_event_id: the_event.fetch('id'))
 
-        if new_event.new_record?
-          events_imported += 1
+          Event.ticketmaster_update_logger.info("New Event found from Venue ID #{@venue_id} with event name #{event_name}")
+
+          if new_event.new_record?
+            events_imported += 1
+            Event.ticketmaster_update_logger.info("Importing event: #{event_name}")
+          end
+
+          @event_hash = {}
+
+          info = the_event.fetch('info') {}
+
+          unless info.nil? #unless info.nil is true do nothing. If
+            @event_hash.merge!(description: info) #if false add description
+          end
+
+          event_venue_info = the_event.fetch('_embedded').fetch('venues').fetch(0) {} # the nested event_venue_info
+          location = event_venue_info.fetch('location') {} #now the nested location
+
+          unless location.nil?
+            @event_hash.merge!(latitude: location.fetch('latitude'))
+            @event_hash.merge!(longitude: location.fetch('longitude'))
+          end
+
+          address = event_venue_info['address']
+          address_line_1 = address.fetch('line1') {}
+          address_line_2 = address.fetch('line2') {}
+          unless address_line_1.nil?
+            @event_hash.merge!(address1: address_line_1)
+          end
+          unless address_line_2.nil?
+            @event_hash.merge!(address2: address_line_2)
+          end
+
+          @event_hash.merge!(link_url: the_event['url'],
+                             image_url: the_event['images'][0]['url'],
+                             city: event_venue_info['city']['name'],
+                             state: event_venue_info['state']['name'],
+                             zipcode: event_venue_info['postalCode'],
+                             country: event_venue_info['country']['countryCode'])
+                              # end_date: end_date TODO: Talk about what we should do about the end time for the ticketmaster events)
+
+          new_event.update_attributes(@event_hash)
+
+          events_processed += 1
         end
-
-
-
-        new_event.update_attributes(
-            description: event['info'],
-            link_url: event['url'],
-            image_url: event['images'][0]['url'],
-            city: event['_embedded']['venues'][0]['city']['name'],
-            state: event['_embedded']['venues'][0]['state']['name'],
-            zipcode: event['_embedded']['venues'][0]['postalCode'],
-            country: event['_embedded']['venues'][0]['country']['countryCode'],
-            longitude: event['_embedded']['venues'][0]['location']['longitude'],
-            latitude: event['_embedded']['venues'][0]['location']['latitude'],
-            address1: event['_embedded']['venues'][0]['address']['line1'],
-            address2: address_line_2
-        # end_date: end_date TODO: Talk about what we should do about the end time for the ticketmaster events.
-        )
-
-        events_processed += 1
-        i += 1
+        Event.ticketmaster_update_logger.info("  Events Processed: #{events_processed}")
+        Event.ticketmaster_update_logger.info("  New Events Imported: #{events_imported}")
       end
-    Event.ticketmaster_update_logger.info("  Events Processed: #{events_processed}")
-    Event.ticketmaster_update_logger.info("  New Events Imported: #{events_imported}")
     end
   rescue Exception => e
     Event.ticketmaster_update_logger.error(e.inspect)

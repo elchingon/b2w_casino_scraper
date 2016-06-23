@@ -120,10 +120,17 @@ class Event < ActiveRecord::Base
   end
 
   def self.import_ticketmaster_events
-    @venue_id = "KovZpaKoVe"
-    ticketmaster_events = TicketmasterApiAccessor.new @venue_id
-    parsed_events = ticketmaster_events.get_ticketmaster_events
-    ticketmaster_events.create_ticketmaster_events parsed_events
+    # Thunder Valley Casino: KovZpaKoVe
+    # Pechanga: ZFr9jZdav6
+    # Sycuan: KovZpZA1IJdA
+    # Harrahs Event Center: KovZpZAEknFA
+    @event_ids = ['KovZpZAEknFA' ]
+
+    @event_ids.each do |event_id|
+      ticketmaster_events = TicketmasterApiAccessor.new event_id
+      parsed_events = ticketmaster_events.get_ticketmaster_events
+      ticketmaster_events.create_ticketmaster_events parsed_events
+    end
   end
 
   def self.event_update_logger
@@ -135,7 +142,5 @@ class Event < ActiveRecord::Base
   def self.ticketmaster_update_logger
     @ticketmaster_update_logs ||= Logger.new("#{Rails.root}/log/ticketmaster_updates.log")
   end
-  def ticketmaster_update_logger
-    @ticketmaster_update_logs ||= Logger.new("#{Rails.root}/log/ticketmaster_updates.log")
-  end
+
 end
