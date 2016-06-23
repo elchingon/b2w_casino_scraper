@@ -1,5 +1,7 @@
 class TicketmasterApiAccessor < ApiAccessor
   #Some Venue IDs
+  include MethodLogger
+  logger_name "ticketmaster_logger"
 
   def initialize venue_id
     @api_key = ENV['ticketmaster_api_key']
@@ -24,7 +26,7 @@ class TicketmasterApiAccessor < ApiAccessor
     begin
       json_events = parsed_response['_embedded']['events']
       unless json_events.nil? || json_events.empty? || json_events.length == 0
-        Event.ticketmaster_update_logger.info("Found #{json_events.length} Events")
+        logger.info("Found #{json_events.length} Events")
 
         events_processed, events_imported = 0, 0
 
@@ -35,12 +37,11 @@ class TicketmasterApiAccessor < ApiAccessor
           venue_name = the_event['_embedded']['venues'][0]['name'] #should be listed off the venue id?
 
           new_event = Event.find_or_initialize_by(ticketmaster_event_id: the_event.fetch('id'))
-
-          Event.ticketmaster_update_logger.info("New Event found from Venue ID #{@venue_id} with event name #{event_name}")
+          logger.info("New Event found from Venue ID #{@venue_id} with event name #{event_name}")
 
           if new_event.new_record?
             events_imported += 1
-            Event.ticketmaster_update_logger.info("Importing event: #{event_name}")
+           logger.info("Importing event: #{event_name}")
           end
 
           @event_hash = {}
@@ -81,12 +82,12 @@ class TicketmasterApiAccessor < ApiAccessor
 
           events_processed += 1
         end
-        Event.ticketmaster_update_logger.info("  Events Processed: #{events_processed}")
-        Event.ticketmaster_update_logger.info("  New Events Imported: #{events_imported}")
+        logger.info("  Events Processed: #{events_processed}")
+        logger.info("  New Events Imported: #{events_imported}")
       end
     end
   rescue Exception => e
-    Event.ticketmaster_update_logger.error(e.inspect)
+    logger.error(e.inspect)
   end
 end
 

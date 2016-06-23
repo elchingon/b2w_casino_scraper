@@ -1,16 +1,20 @@
 class Event < ActiveRecord::Base
 
+  include MethodLogger
+  logger_name "event_update_logger"
+
   def self.import_pechanga_events
     begin
+      #event_update_logger = logger('event_logger')
       events_processed, events_imported = 0, 0
 
       pechanga_id = 136
-      event_update_logger.info("Starting Pechanga Event Import - venue_id #{pechanga_id}")
+      logger.info("Starting Pechanga Event Import - venue_id #{pechanga_id}")
 
       wiki_event = WikiEvent.new "https://www.pechanga.com/", "rest/v2.0/entertainment/api/Entertainment/E?_=1463671134566"
       events_array = wiki_event.parse_pechanga_rest_api
 
-      event_update_logger.info("    #{events_array.length} Events Found")
+      logger.info("    #{events_array.length} Events Found")
 
       events_array.each do |event_hash|
 
@@ -20,17 +24,17 @@ class Event < ActiveRecord::Base
           dates = event_hash['dates']
           new_dates = dates.split(/([pm|am],)/).each_slice(2).map(&:join)
 
-          event_update_logger.info("    Parsing #{event_hash['title']} Event with #{new_dates.length} different start_dates")
+          logger.info("    Parsing #{event_hash['title']} Event with #{new_dates.length} different start_dates")
 
           new_dates.each do |date|
             start_date = date.to_datetime.to_formatted_s(:db)
 
-            event_update_logger.info("    Loading Event Start Date: #{start_date}")
+            logger.info("    Loading Event Start Date: #{start_date}")
 
             event = Event.find_or_initialize_by(venue_id: pechanga_id, title: event_hash['title'], start_date: start_date)
 
             if event.new_record?
-              event_update_logger.info("  New Event - Title #{event_hash['title']}")
+              logger.info("  New Event - Title #{event_hash['title']}")
               events_imported += 1
             end
 
@@ -46,10 +50,10 @@ class Event < ActiveRecord::Base
 
       end unless events_array.empty?
 
-      event_update_logger.info("  Events Processed: #{events_processed}")
-      event_update_logger.info("  New Events Imported: #{events_imported}")
+      logger.info("  Events Processed: #{events_processed}")
+      logger.info("  New Events Imported: #{events_imported}")
     rescue Exception => e
-      event_update_logger.error(e.inspect)
+      logger.error(e.inspect)
       #raise
     end
   end
@@ -60,13 +64,13 @@ class Event < ActiveRecord::Base
       events_processed, events_imported = 0, 0
       sycuan_id = 305
 
-      event_update_logger.info("Starting Sycuan Event ID #{sycuan_id}")
+      logger.info("Starting Sycuan Event ID #{sycuan_id}")
 
       wiki_event = WikiEvent.new "http://www.sycuan.com/", "events/"
 
       event_array = wiki_event.parse_sycuan_event_list
 
-      event_update_logger.info("  #{event_array.length} Event URls Found")
+      logger.info("  #{event_array.length} Event URls Found")
 
       event_array.each do |event_url|
         if event_url
@@ -81,7 +85,7 @@ class Event < ActiveRecord::Base
             event = Event.find_or_initialize_by(venue_id: sycuan_id, title: event_hash['title'], start_date: start_date)
 
             if event.new_record?
-              event_update_logger.info("  New Event - Title #{event_hash['title']}")
+              logger.info("  New Event - Title #{event_hash['title']}")
               events_imported += 1
             end
 
@@ -99,13 +103,14 @@ class Event < ActiveRecord::Base
 
       #wiki_event_details = WikiEvent.new "http://www.sycuan.com", "+ url
       #Method to parse event detail
-      event_update_logger.info("  Events Processed: #{events_processed}")
-      event_update_logger.info("  New Events Imported: #{events_imported}")
+      logger.info("  Events Processed: #{events_processed}")
+      logger.info("  New Events Imported: #{events_imported}")
     rescue Exception => e
-      event_update_logger.error(e.inspect)
+      logger.error(e.inspect)
+
+
     end
   end
-
   def self.import_b2w_events
     @b2w_url = "http://api.born2win.club/v1/events"
     b2w_events = ApiAccessor.new @b2w_url, " "
@@ -115,8 +120,6 @@ class Event < ActiveRecord::Base
     # more explicit would be
 
     parsed_events = access_api.to_json.gsub!(/\"/, '\'') #not certain what is better?
-
-    binding.pry
   end
 
   def self.import_ticketmaster_events
@@ -132,15 +135,10 @@ class Event < ActiveRecord::Base
       ticketmaster_events.create_ticketmaster_events parsed_events
     end
   end
-
-  def self.event_update_logger
-    @event_update_logs ||= Logger.new("#{Rails.root}/log/event_updates.log")
-  end
-  def event_update_logger
-    @event_update_logs ||= Logger.new("#{Rails.root}/log/event_updates.log")
-  end
-  def self.ticketmaster_update_logger
-    @ticketmaster_update_logs ||= Logger.new("#{Rails.root}/log/ticketmaster_updates.log")
-  end
-
+  #def self.event_update_logger
+  #  @event_update_logs ||= Logger.new("#{Rails.root}/log/event_updates.log")
+  #end
+  #def event_update_logger
+  #  @event_update_logs ||= Logger.new("#{Rails.root}/log/event_updates.log")
+  #end
 end
