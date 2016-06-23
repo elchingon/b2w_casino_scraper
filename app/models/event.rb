@@ -46,8 +46,8 @@ class Event < ActiveRecord::Base
 
       end unless events_array.empty?
 
-        event_update_logger.info("  Events Processed: #{events_processed}")
-        event_update_logger.info("  New Events Imported: #{events_imported}")
+      event_update_logger.info("  Events Processed: #{events_processed}")
+      event_update_logger.info("  New Events Imported: #{events_imported}")
     rescue Exception => e
       event_update_logger.error(e.inspect)
       #raise
@@ -103,14 +103,39 @@ class Event < ActiveRecord::Base
       event_update_logger.info("  New Events Imported: #{events_imported}")
     rescue Exception => e
       event_update_logger.error(e.inspect)
-
-
     end
   end
+
+  def self.import_b2w_events
+    @b2w_url = "http://api.born2win.club/v1/events"
+    b2w_events = ApiAccessor.new @b2w_url, " "
+    access_api = b2w_events.access_api(@b2w_url)
+    # this works,
+    # parsed_events = b2w_events.parse_api #tada.
+    # more explicit would be
+
+    parsed_events = access_api.to_json.gsub!(/\"/, '\'') #not certain what is better?
+
+    binding.pry
+  end
+
+  def self.import_ticketmaster_events
+    @venue_id = "KovZpaKoVe"
+    ticketmaster_events = TicketmasterApiAccessor.new @venue_id
+    parsed_events = ticketmaster_events.get_ticketmaster_events
+    ticketmaster_events.create_ticketmaster_events parsed_events
+  end
+
   def self.event_update_logger
     @event_update_logs ||= Logger.new("#{Rails.root}/log/event_updates.log")
   end
   def event_update_logger
     @event_update_logs ||= Logger.new("#{Rails.root}/log/event_updates.log")
+  end
+  def self.ticketmaster_update_logger
+    @ticketmaster_update_logs ||= Logger.new("#{Rails.root}/log/ticketmaster_updates.log")
+  end
+  def ticketmaster_update_logger
+    @ticketmaster_update_logs ||= Logger.new("#{Rails.root}/log/ticketmaster_updates.log")
   end
 end
