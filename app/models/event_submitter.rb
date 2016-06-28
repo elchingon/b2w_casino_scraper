@@ -10,9 +10,8 @@ class EventSubmitter < ApiAccessor
 
   def post_event event
     @event = event #find by the event id. Note the find method defaults to finding by id
-    logger_name("event_submit")
+    event_logger = logger("event_submit")
     begin
-      binding.pry
       @event_json = @event.as_json #to useable json object
       @camel_event_json = @event_json.transform_keys {|key| key.camelize(:lower)} #camelcase the keys for the PHP
 
@@ -20,9 +19,9 @@ class EventSubmitter < ApiAccessor
 
       post_to_api(@api_url, :body => @camel_event_json_nested) # post it to the the api
 
-      logger.info("posting new event to b2w API with event id: #{@event.id}") # log it just to make sure
+      event_logger.info("posting new event to b2w API with event id: #{@event.id}") # log it just to make sure
 
-      logger.info("The returned response status is #{@post_response['status']}") #log the response status 
+      event_logger.info("The returned response status is #{@post_response['status']}") #log the response status
 
     rescue Exception => e
       logger.error(e.inspect) #log any errors

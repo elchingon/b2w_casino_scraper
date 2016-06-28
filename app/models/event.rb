@@ -129,7 +129,6 @@ class Event < ActiveRecord::Base
     # Sycuan: KovZpZA1IJdA
     # Harrahs Event Center: KovZpZAEknFA
     @event_ids = ['KovZpZAEknFA' ]
-
     @event_ids.each do |event_id|
       ticketmaster_events = TicketmasterApiAccessor.new event_id
       parsed_events = ticketmaster_events.get_ticketmaster_events
@@ -138,6 +137,7 @@ class Event < ActiveRecord::Base
   end
 
   def self.post_b2w_events
+
     @future_events = Event.with_date_from(Time.now)
     @future_events.each do |event|
       @event = event
