@@ -14,8 +14,6 @@ gem 'thin'
 
 gem 'nokogiri'
 gem 'httparty'
-gem 'jbuilder'
-
 
 gem 'httparty'
 

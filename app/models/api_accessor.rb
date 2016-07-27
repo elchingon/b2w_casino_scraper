@@ -13,8 +13,4 @@ class ApiAccessor
   def parse_api
     @parsed_response = @response.to_json.gsub!(/\"/, '\'') # parse the API return the JSON
   end
-
-  def post_to_api url, event_json
-    @post_response = HTTParty.post(url, event_json)
-  end
 end
