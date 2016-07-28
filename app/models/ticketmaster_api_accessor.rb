@@ -70,7 +70,8 @@ class TicketmasterApiAccessor < ApiAccessor
             @event_hash.merge!(address2: address_line_2)
           end
 
-          @event_hash.merge!(link_url: the_event['url'],
+          @event_hash.merge!(title: the_event['name'],
+                             link_url: the_event['url'],
                              image_url: the_event['images'][0]['url'],
                              city: event_venue_info['city']['name'],
                              state: event_venue_info['state']['name'],
