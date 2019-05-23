@@ -9,7 +9,7 @@ class Event < ActiveRecord::Base
       #event_update_logger = logger('event_logger')
       events_processed, events_imported = 0, 0
 
-      pechanga_id = 136
+      pechanga_id = 279
       logger.info("Starting Pechanga Event Import - venue_id #{pechanga_id}")
 
       wiki_event = WikiEvent.new "https://www.pechanga.com/", "rest/v2.0/entertainment/api/Entertainment/E?_=1463671134566"
@@ -124,26 +124,29 @@ class Event < ActiveRecord::Base
   end
 
   def self.import_ticketmaster_events
-    # Thunder Valley Casino: KovZpaKoVe
-    # Pechanga: ZFr9jZdav6
+    # Thunder Valley Casino: KovZpaKoVe  venue_id = 308
+    # Pechanga: ZFr9jZdav6  venue_id = 279
     # Sycuan: KovZpZA1IJdA
-    # Harrahs Event Center: KovZpZAEknFA
-    @event_ids = ['KovZpZAEknFA' ]
-    @event_ids.each do |event_id|
+    # Harrahs Event Center: KovZpZAEknFA   venue_id = 233
+    venue_ids = [308, 233, 279]
+    @event_ids = ['KovZpaKoVe', 'KovZpZAEknFA', 'ZFr9jZdav6'  ]
+    @event_ids.each_with_index do |event_id, index|
       ticketmaster_events = TicketmasterApiAccessor.new event_id
       parsed_events = ticketmaster_events.get_ticketmaster_events
-      ticketmaster_events.create_ticketmaster_events parsed_events
+      ticketmaster_events.create_ticketmaster_events parsed_events, venue_ids[index]
     end
   end
 
   def self.post_b2w_events
 
-    @future_events = Event.with_date_from(Time.now)
-    @future_events.each do |event|
+    b2w_poster = EventSubmitter.new @api_key, "http://api.born2win.club/v2/event-submit.json"
+    future_events = Event.with_date_from(Time.now)
+    future_events.each do |event|
       @event = event
-      b2w_poster = EventSubmitter.new @api_key
       b2w_post = b2w_poster.post_event @event
-    end
+
+      logger.info(b2w_post.inspect)
+    end if future_events
   end
   #def self.event_update_logger
   #  @event_update_logs ||= Logger.new("#{Rails.root}/log/event_updates.log")

@@ -4,7 +4,7 @@ class TicketmasterApiAccessor < ApiAccessor
   logger_name("ticketmaster_logger")
 
   def initialize venue_id
-    @api_key = ENV['ticketmaster_api_key']
+    @api_key = '4fFnCR4ir6TZrWKNKYPAlBfpBJrdKMpo' #ENV['ticketmaster_api_key']
     @venue_id = venue_id
 
   end
@@ -21,7 +21,7 @@ class TicketmasterApiAccessor < ApiAccessor
       end
   end
 
-  def create_ticketmaster_events parsed_response
+  def create_ticketmaster_events parsed_response, venue_id
     ticket_logger = logger("ticketmaster_logger")
     begin
       json_events = parsed_response['_embedded']['events']
@@ -34,6 +34,7 @@ class TicketmasterApiAccessor < ApiAccessor
           the_event = event #stepping on naming toes. Woops.
           event_name = the_event['name']
           event_start_date = the_event['dates']['start']['dateTime']
+          event_end_date = DateTime.parse(event_start_date) + 5.hours
           venue_name = the_event['_embedded']['venues'][0]['name'] #should be listed off the venue id?
 
           new_event = Event.find_or_initialize_by(ticketmaster_event_id: the_event.fetch('id'))
@@ -41,7 +42,7 @@ class TicketmasterApiAccessor < ApiAccessor
 
           if new_event.new_record?
             events_imported += 1
-           ticket_logger.info("Importing event: #{event_name}")
+            ticket_logger.info("Importing event: #{event_name}")
           end
 
           @event_hash = {}
@@ -70,12 +71,18 @@ class TicketmasterApiAccessor < ApiAccessor
             @event_hash.merge!(address2: address_line_2)
           end
 
+
+
           @event_hash.merge!(link_url: the_event['url'],
                              image_url: the_event['images'][0]['url'],
                              city: event_venue_info['city']['name'],
                              state: event_venue_info['state']['name'],
                              zipcode: event_venue_info['postalCode'],
-                             country: event_venue_info['country']['countryCode'])
+                             country: event_venue_info['country']['countryCode'],
+                             start_date: event_start_date,
+                             end_date: event_end_date,
+                             title: event_name,
+                             venue_id: venue_id)
                               # end_date: end_date TODO: Talk about what we should do about the end time for the ticketmaster events)
 
           new_event.update_attributes(@event_hash)

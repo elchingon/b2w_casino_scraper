@@ -15,6 +15,6 @@ class ApiAccessor
   end
 
   def post_to_api url, event_json
-    @post_response = HTTParty.post(url, event_json)
+    HTTParty.post(url, event_json)
   end
 end
